@@ -318,30 +318,16 @@ Para validar a aplicação, foram realizados testes no Postman utilizando a Coll
 ### Teste 1: Cadastro com Sucesso (POST)
 Enviando um payload válido para criar um recurso.
 > **Screenshot do Teste:**
-> ![Print do Postman mostrando o POST 201 Created](./caminho/para/sua/imagem-post-sucesso.png)
+> ![Print do Postman mostrando o POST 201 Created](./pictures/POST_print.PNG)
 
 ### Teste 2: Listagem de Filmes (GET)
 Verificando se os recursos criados via POST estão sendo listados corretamente no GET.
 > **Screenshot do Teste:**
-> ![Print do Postman mostrando o GET 200 OK](./caminho/para/sua/imagem-get-sucesso.png)
+> ![Print do Postman mostrando o GET 200 OK](./pictures/GET_print.PNG)
 
 ### Teste 3: Validação de Erro - Tipo Incorreto (POST)
 Enviando o "ano" como String em vez de Number para disparar o erro 400.
 > **Screenshot do Teste:**
-> ![Print do Postman mostrando o Erro 400 de tipagem](./caminho/para/sua/imagem-post-erro.png)
-Dicas para finalizar sua entrega:
+> ![Print do Postman mostrando o Erro 400 de tipagem](./pictures/ERRO_print.PNG)
 
-Crie uma pasta chamada imagens ou assets junto do seu projeto.
-
-Tire prints do seu Postman rodando certinho (um dando sucesso no POST, um listando os filmes no GET, e um dando erro de validação).
-
-Substitua o texto ./caminho/para/sua/imagem... pelos nomes corretos dos seus arquivos de imagem.
-
-Quer que eu te ajude a gerar o arquivo JSON da "Collection do Postman" caso você tenha alguma dúvida de como exportar por lá?
-
-
-
-
-
-O Gemini não é humano. Ele pode cometer erros. Por isso, é bom checar as respostas.
 
