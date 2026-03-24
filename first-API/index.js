@@ -58,6 +58,61 @@ app.post('/filmes', (req, res) => {
     });
 });
 
+// PUT /filmes/:id -> Atualiza um filme existente integralmente
+app.put('/filmes/:id', (req, res) => {
+    // 1. Pega o ID da URL e converte para número
+    const id = parseInt(req.params.id, 10);
+    
+    // 2. Busca o index do filme no array
+    const index = filmes.findIndex(filme => filme.id === id);
+
+    // 3. Se não encontrar, retorna 404 Not Found
+    if (index === -1) {
+        return res.status(404).json({ erro: "Resource not found. Filme não encontrado." });
+    }
+
+    const { titulo, diretor, ano, genero } = req.body;
+
+    // 4. Validação de campos obrigatórios (O PUT substitui o recurso todo)
+    if (!titulo || !diretor || !ano || !genero) {
+        return res.status(400).json({ 
+            erro: "Payload inválido. Missing required fields (titulo, diretor, ano, genero)." 
+        });
+    }
+
+    // 5. Type checking rigoroso
+    if (typeof titulo !== 'string' || 
+        typeof diretor !== 'string' || 
+        typeof genero !== 'string') {
+        return res.status(400).json({ erro: "Type mismatch: titulo, diretor e genero devem ser string." });
+    }
+
+    if (typeof ano !== 'number') {
+        return res.status(400).json({ erro: "Type mismatch: ano deve ser number." });
+    }
+
+    // 6. Business logic
+    const currentYear = new Date().getFullYear();
+    if (ano < 1888 || ano > currentYear + 5) {
+        return res.status(400).json({ erro: "Business rule violation: ano fora do range permitido." });
+    }
+
+    // 7. Atualiza o resource no mock DB mantendo o mesmo ID
+    filmes[index] = {
+        id, // Mantém o ID original da URL
+        titulo,
+        diretor,
+        ano,
+        genero
+    };
+
+    // 8. Retorna 200 OK com o DTO atualizado
+    res.status(200).json({
+        mensagem: "Resource updated successfully",
+        data: filmes[index]
+    });
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
