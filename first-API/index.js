@@ -113,6 +113,29 @@ app.put('/filmes/:id', (req, res) => {
     });
 });
 
+// DELETE /filmes/:id -> Deleta um filme existente
+app.delete('/filmes/:id', (req, res) => {
+    // 1. Pega o ID da URL e converte para número
+    const id = parseInt(req.params.id, 10);
+
+    // 2. Busca o index do filme
+    const index = filmes.findIndex(filme => filme.id === id);
+
+    // 3. Se não encontrar, retorna 404 Not Found
+    if (index === -1) {
+        return res.status(404).json({ erro: "Resource not found. Filme não encontrado." });
+    }
+
+    // 4. Remove o item do array usando splice
+    filmes.splice(index, 1);
+
+    // 5. Retorna 200 OK confirmando a deleção
+    // Nota: Algumas APIs preferem retornar 204 No Content sem corpo de resposta via res.status(204).send()
+    res.status(200).json({
+        mensagem: "Resource deleted successfully"
+    });
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
