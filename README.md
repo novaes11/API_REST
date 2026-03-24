@@ -147,7 +147,8 @@ Enviando o "ano" como String em vez de Number para disparar o erro 400.
 ### Teste 4: Atualização de Filme (PUT)
 Atualizando as informações de um filme existente.
 > **Screenshot do Teste:**
-> ![Print do Postman mostrando o PUT 200 OK](./pictures/PUT_print.PNG)
+> ![Print do Postman antes da alteração](./pictures/PUTANTES_print.PNG)
+> ![Print do Postman mostrando o PUT 200 OK](./pictures/PUTDEPOIS_print.PNG)
 
 ### Teste 5: Remoção de Filme (DELETE)
 Deletando um recurso previamente criado.
