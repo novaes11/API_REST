@@ -1,5 +1,9 @@
 const express = require('express');
 const app = express();
+const Database = require('better-sqlite3');
+const db = new Database('test.db');
+
+console.log('✅ SQLite funcionando!');
 
 // Body parser
 app.use(express.json());
