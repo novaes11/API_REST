@@ -1,143 +1,148 @@
 const express = require('express');
-const app = express();
-const Database = require('better-sqlite3');
-const db = new Database('test.db');
+const db = require('./database'); // Importando o banco
 
-console.log('✅ SQLite funcionando!');
+const app = express();
 
 // Body parser
 app.use(express.json());
 
-// Mock DB em memória
-let filmes = [];
+// GET /filmes/:id -> Retorna apenas UM filme pelo ID
+app.get('/filmes/:id', (req, res) => {
+    try{
+    // Pegamos o ID que o usuário digitou na URL
+    const id = parseInt(req.params.id, 10);
 
-// GET /filmes -> Lista todos os resources
-app.get('/filmes', (req, res) => {
-    res.status(200).json(filmes);
+    // 1. Prepara a query com ?
+    const stmt = db.prepare('SELECT * FROM filmes WHERE id = ?');
+    
+    // 2. Executa usando .get() passando o ID
+    const filme = stmt.get(id); // Retorna 1 objeto inteiro ou 'undefined'
+
+    // Se o banco não achou nada, retorna 404
+    if (!filme) {
+        return res.status(404).json({ erro: "Filme não encontrado." });
+    }
+
+    // Se achou, retorna o filme!
+    res.status(200).json(filme);
+    } catch(error) {
+        console.error(error)
+        res.status(500).json({error: 'Erro ao buscar filme'})
+    }
+});
+
+// GET /api/produtos - Listar todos
+app.get('/first-API/filmes', (req, res) => {
+    try {
+        // Preparar query
+        const stmt = db.prepare('SELECT * FROM filmes');
+        
+        // Executar e pegar todos os resultados
+        const filmes = stmt.all();
+        
+        // Retornar array (pode ser vazio [])
+        res.json(filmes);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ erro: 'Erro ao buscar filmes' });
+    }
 });
 
 // POST /filmes -> Cria novo filme
 app.post('/filmes', (req, res) => {
-    const { titulo, diretor, ano, genero } = req.body;
+    try {
+        const { titulo, diretor, ano, genero } = req.body;
 
-    // Validação de campos obrigatórios
-    if (!titulo || !diretor || !ano || !genero) {
-        return res.status(400).json({ 
-            erro: "Payload inválido. Missing required fields (titulo, diretor, ano, genero)." 
+        // Validação de campos obrigatórios
+        if (!titulo || !diretor || !ano || !genero) {
+            return res.status(400).json({ 
+                erro: "Payload inválido. Missing required fields (titulo, diretor, ano, genero)." 
+            });
+        }
+
+        // Type checking rigoroso
+        if (typeof titulo !== 'string' || 
+            typeof diretor !== 'string' || 
+            typeof genero !== 'string') {
+            return res.status(400).json({ erro: "Type mismatch: titulo, diretor e genero devem ser string." });
+        }
+
+        if (typeof ano !== 'number') {
+            return res.status(400).json({ erro: "Type mismatch: ano deve ser number." });
+        }
+
+        // Business logic
+        const currentYear = new Date().getFullYear();
+        if (ano < 1888 || ano > currentYear + 5) {
+            return res.status(400).json({ erro: "Business rule violation: ano fora do range permitido." });
+        }
+
+        // 🔒 PROTEÇÃO SQL INJECTION AQUI: 
+        // Usamos `?` no lugar dos valores. O better-sqlite3 sanitiza os dados automaticamente.
+        const stmt = db.prepare(
+            'INSERT INTO filmes (titulo, diretor, ano, genero) VALUES (?, ?, ?, ?)'
+        );
+        const info = stmt.run(titulo, diretor, ano, genero); // Passamos as variáveis aqui
+
+        res.status(201).json({
+            mensagem: "Resource created successfully",
+            data: { id: info.lastInsertRowid, titulo, diretor, ano, genero }
         });
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({ error : 'Erro ao cirar produto'})
     }
-
-    // Type checking rigoroso
-    if (typeof titulo !== 'string' || 
-        typeof diretor !== 'string' || 
-        typeof genero !== 'string') {
-        return res.status(400).json({ erro: "Type mismatch: titulo, diretor e genero devem ser string." });
-    }
-
-    if (typeof ano !== 'number') {
-        return res.status(400).json({ erro: "Type mismatch: ano deve ser number." });
-    }
-
-    // Business logic: range de ano válido (cinema surgiu em 1888)
-    const currentYear = new Date().getFullYear();
-    if (ano < 1888 || ano > currentYear + 5) {
-        return res.status(400).json({ erro: "Business rule violation: ano fora do range permitido." });
-    }
-
-    // Monta e insere o novo resource
-    const novoFilme = {
-        id: filmes.length ? filmes[filmes.length - 1].id + 1 : 1, // Auto-increment genérico
-        titulo,
-        diretor,
-        ano,
-        genero
-    };
-
-    filmes.push(novoFilme);
-
-    // Retorna 201 Created com o DTO do recurso criado
-    res.status(201).json({
-        mensagem: "Resource created successfully",
-        data: novoFilme
-    });
 });
 
-// PUT /filmes/:id -> Atualiza um filme existente integralmente
+// PUT /filmes/:id -> Atualiza um filme existente
 app.put('/filmes/:id', (req, res) => {
-    // 1. Pega o ID da URL e converte para número
-    const id = parseInt(req.params.id, 10);
-    
-    // 2. Busca o index do filme no array
-    const index = filmes.findIndex(filme => filme.id === id);
+    try {
+        const id = parseInt(req.params.id, 10);
+        const { titulo, diretor, ano, genero } = req.body;
 
-    // 3. Se não encontrar, retorna 404 Not Found
-    if (index === -1) {
-        return res.status(404).json({ erro: "Resource not found. Filme não encontrado." });
-    }
+        if (!titulo || !diretor || !ano || !genero) {
+            return res.status(400).json({ erro: "Missing required fields." });
+        }
 
-    const { titulo, diretor, ano, genero } = req.body;
+        // 🔒 PROTEÇÃO SQL INJECTION AQUI TAMBÉM:
+        const stmt = db.prepare('UPDATE filmes SET titulo = ?, diretor = ?, ano = ?, genero = ? WHERE id = ?');
+        const info = stmt.run(titulo, diretor, ano, genero, id); 
 
-    // 4. Validação de campos obrigatórios (O PUT substitui o recurso todo)
-    if (!titulo || !diretor || !ano || !genero) {
-        return res.status(400).json({ 
-            erro: "Payload inválido. Missing required fields (titulo, diretor, ano, genero)." 
+        // Se info.changes for 0, significa que nenhum ID correspondente foi encontrado
+        if (info.changes === 0) {
+            return res.status(404).json({ erro: "Resource not found. Filme não encontrado." });
+        }
+
+        res.status(200).json({
+            mensagem: "Resource updated successfully",
+            data: { id, titulo, diretor, ano, genero }
         });
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({ erro: 'Erro ao atualizar filme'})
     }
-
-    // 5. Type checking rigoroso
-    if (typeof titulo !== 'string' || 
-        typeof diretor !== 'string' || 
-        typeof genero !== 'string') {
-        return res.status(400).json({ erro: "Type mismatch: titulo, diretor e genero devem ser string." });
-    }
-
-    if (typeof ano !== 'number') {
-        return res.status(400).json({ erro: "Type mismatch: ano deve ser number." });
-    }
-
-    // 6. Business logic
-    const currentYear = new Date().getFullYear();
-    if (ano < 1888 || ano > currentYear + 5) {
-        return res.status(400).json({ erro: "Business rule violation: ano fora do range permitido." });
-    }
-
-    // 7. Atualiza o resource no mock DB mantendo o mesmo ID
-    filmes[index] = {
-        id, // Mantém o ID original da URL
-        titulo,
-        diretor,
-        ano,
-        genero
-    };
-
-    // 8. Retorna 200 OK com o DTO atualizado
-    res.status(200).json({
-        mensagem: "Resource updated successfully",
-        data: filmes[index]
-    });
 });
 
 // DELETE /filmes/:id -> Deleta um filme existente
 app.delete('/filmes/:id', (req, res) => {
-    // 1. Pega o ID da URL e converte para número
-    const id = parseInt(req.params.id, 10);
+    try{
+        const id = parseInt(req.params.id, 10);
 
-    // 2. Busca o index do filme
-    const index = filmes.findIndex(filme => filme.id === id);
+        // 🔒 PROTEÇÃO SQL INJECTION:
+        const stmt = db.prepare('DELETE FROM filmes WHERE id = ?');
+        const info = stmt.run(id);
 
-    // 3. Se não encontrar, retorna 404 Not Found
-    if (index === -1) {
-        return res.status(404).json({ erro: "Resource not found. Filme não encontrado." });
+        if (info.changes === 0) {
+            return res.status(404).json({ erro: "Resource not found. Filme não encontrado." });
+        }
+
+        res.status(200).json({
+            mensagem: "Resource deleted successfully"
+        });
+    } catch(error){
+        console.error(error);
+        res.status(500).json({ erro: 'Erro ao deletar produto'})
     }
-
-    // 4. Remove o item do array usando splice
-    filmes.splice(index, 1);
-
-    // 5. Retorna 200 OK confirmando a deleção
-    // Nota: Algumas APIs preferem retornar 204 No Content sem corpo de resposta via res.status(204).send()
-    res.status(200).json({
-        mensagem: "Resource deleted successfully"
-    });
 });
 
 // Start server
