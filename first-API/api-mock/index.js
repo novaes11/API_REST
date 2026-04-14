@@ -69,3 +69,36 @@ function validarFilme(req, res, next) {
     // Se passou por todas as validações sem retornar erro, avança para a rota principal
     next();
 }
+
+/**
+ * 1. GET /filmes - Listar todos os filmes
+ * Retorna a lista completa de objetos cadastrados no array (Mock DB).
+ */
+app.get('/filmes', (req, res) => {
+    try {
+        res.status(200).json(filmes);
+    } catch (error) {
+        res.status(500).json({ erro: "Erro interno do servidor ao buscar filmes." });
+    }
+});
+
+/**
+ * 2. GET /filmes/:id - Buscar filme por ID
+ * Procura um filme específico na base utilizando o ID passado na URL.
+ */
+app.get('/filmes/:id', (req, res) => {
+    try {
+        // Converte o ID recebido da URL (que sempre vem como string) para número inteiro
+        const id = parseInt(req.params.id, 10);
+        const filme = filmes.find(f => f.id === id);
+
+        // Se o método find() retornar undefined, significa que o ID não existe
+        if (!filme) {
+            return res.status(404).json({ erro: "Filme não encontrado." });
+        }
+
+        res.status(200).json(filme);
+    } catch (error) {
+        res.status(500).json({ erro: "Erro interno do servidor ao buscar o filme." });
+    }
+});
