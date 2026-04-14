@@ -24,5 +24,5 @@ Para manter o repositório organizado, os detalhes técnicos, guias de execuçã
 ----
 Acesse os links abaixo para ver os detalhes:
 
-- 📁 **API de Filmes (Mock / Em memória)**
+- 📁 **API de Filmes (<a href="https://github.com/novaes11/API_REST/tree/main/first-API/api-mock">Mock</a> / Em memória)** 
 - 📁 **API de Filmes (Banco de Dados SQLite)**
