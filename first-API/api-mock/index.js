@@ -102,3 +102,31 @@ app.get('/filmes/:id', (req, res) => {
         res.status(500).json({ erro: "Erro interno do servidor ao buscar o filme." });
     }
 });
+
+/**
+ * 3. POST /filmes - Cadastrar um novo filme
+ * Recebe um payload JSON, passa pelo middleware 'validarFilme',
+ * atribui um novo ID e adiciona ao array.
+ */
+app.post('/filmes', validarFilme, (req, res) => {
+    try {
+        const { titulo, diretor, ano, genero } = req.body;
+        
+        const novoFilme = {
+            id: currentId++,
+            titulo,
+            diretor,
+            ano,
+            genero
+        };
+
+        // Adiciona o novo objeto no final do nosso array (Mock DB)
+        filmes.push(novoFilme);
+        res.status(201).json({
+            mensagem: "Filme cadastrado com sucesso!",
+            data: novoFilme
+        });
+    } catch (error) {
+        res.status(500).json({ erro: "Erro interno do servidor ao cadastrar o filme." });
+    }
+});
