@@ -130,3 +130,39 @@ app.post('/filmes', validarFilme, (req, res) => {
         res.status(500).json({ erro: "Erro interno do servidor ao cadastrar o filme." });
     }
 });
+
+/**
+ * 4. PUT /filmes/:id - Atualizar um filme existente (Substituição Completa)
+ * Busca o filme pelo ID e substitui totalmente os dados antigos pelos novos.
+ * Também passa pelas mesmas validações do método POST.
+ */
+app.put('/filmes/:id', validarFilme, (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        // Localiza a posição (índice) do objeto dentro do array
+        const index = filmes.findIndex(f => f.id === id);
+
+        // Se retornar -1, significa que não encontrou o item
+        if (index === -1) {
+            return res.status(404).json({ erro: "Filme não encontrado para atualização." });
+        }
+
+        const { titulo, diretor, ano, genero } = req.body;
+
+        // Substitui o objeto na posição encontrada com os novos dados fornecidos
+        filmes[index] = {
+            id,
+            titulo,
+            diretor,
+            ano,
+            genero
+        };
+
+        res.status(200).json({
+            mensagem: "Filme atualizado com sucesso!",
+            data: filmes[index]
+        });
+    } catch (error) {
+        res.status(500).json({ erro: "Erro interno do servidor ao atualizar o filme." });
+    }
+});
