@@ -10,9 +10,6 @@ const app = express();
 // Middleware nativo do Express para converter o corpo das requisições (body) em JSON
 app.use(express.json());
 
-// Middleware nativo do Express para converter o corpo das requisições (body) em JSON
-app.use(express.json());
-
 // Mínimo 10 registros iniciais em memória (Mock). 
 // Essa variável atua como o nosso "Banco de Dados" enquanto a aplicação estiver rodando.
 let filmes = [
