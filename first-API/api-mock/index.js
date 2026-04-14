@@ -166,3 +166,32 @@ app.put('/filmes/:id', validarFilme, (req, res) => {
         res.status(500).json({ erro: "Erro interno do servidor ao atualizar o filme." });
     }
 });
+
+/**
+ * 5. DELETE /filmes/:id - Remover um filme
+ * Busca o filme pelo ID informado na URL e o remove permanentemente do array em memória.
+ */
+app.delete('/filmes/:id', (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const index = filmes.findIndex(f => f.id === id);
+
+        // Garante que não vamos tentar deletar algo que não existe
+        if (index === -1) {
+            return res.status(404).json({ erro: "Filme não encontrado para deleção." });
+        }
+
+        // O método splice() remove elementos do array a partir de um índice
+        // Neste caso, remove exatamente 1 elemento que está na posição 'index'
+        filmes.splice(index, 1);
+        res.status(200).json({ mensagem: "Filme deletado com sucesso!" });
+    } catch (error) {
+        res.status(500).json({ erro: "Erro interno do servidor ao deletar o filme." });
+    }
+});
+
+// Inicializa o servidor utilizando a porta das variáveis de ambiente (se existir) ou a 3000 como fallback
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`[API Mock] Servidor de Filmes rodando na porta ${PORT}`);
+});
