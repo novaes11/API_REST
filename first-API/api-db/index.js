@@ -1,10 +1,43 @@
 const express = require('express');
 const db = require('./database'); // Importando o banco
+const jwt = require('jsonwebtoken'); // Importando o JWT
 
 const app = express();
+const SECRET_KEY = 'minha_chave_secreta_faculdade'; // Em produção, use variáveis de ambiente (.env)!
 
 // Body parser
 app.use(express.json());
+
+// Rota de Login para gerar o Token JWT
+app.post('/login', (req, res) => {
+    const { usuario, senha } = req.body;
+    
+    // Mock de usuário (Hardcoded para estudo). Em um projeto real, você buscaria no banco de dados.
+    if (usuario === 'admin' && senha === '123456') {
+        // Gera o token com validade de 1 hora
+        const token = jwt.sign({ userId: 1, role: 'admin' }, SECRET_KEY, { expiresIn: '1h' });
+        return res.json({ auth: true, token });
+    }
+    
+    res.status(401).json({ auth: false, erro: 'Credenciais inválidas!' });
+});
+
+// Middleware para verificar o Token JWT nas rotas protegidas
+function verifyJWT(req, res, next) {
+    const tokenHeader = req.headers['authorization'];
+    if (!tokenHeader) return res.status(401).json({ auth: false, erro: 'Nenhum token fornecido.' });
+    
+    // O token geralmente vem no formato "Bearer <token>", então separamos pelo espaço
+    const token = tokenHeader.split(' ')[1] || tokenHeader;
+    
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) return res.status(403).json({ auth: false, erro: 'Falha ao autenticar o token (pode estar expirado ou incorreto).' });
+        
+        // Se tudo estiver ok, salva o ID do usuário na request para uso futuro e avança
+        req.userId = decoded.userId;
+        next();
+    });
+}
 
 // GET /filmes/:id -> Retorna apenas UM filme pelo ID
 app.get('/filmes/:id', (req, res) => {
@@ -31,17 +64,52 @@ app.get('/filmes/:id', (req, res) => {
     }
 });
 
-// GET /api/produtos - Listar todos
+// GET /first-API/filmes - Listar todos (Com Filtros, Ordenação, Paginação e JOIN)
 app.get('/first-API/filmes', (req, res) => {
     try {
-        // Preparar query
-        const stmt = db.prepare('SELECT * FROM filmes');
+        // 1. Recebendo parâmetros da URL (Query Params) com valores padrão
+        const limit = parseInt(req.query.limit) || 10;     // Quantos itens por página? (Padrão: 10)
+        const page = parseInt(req.query.page) || 1;        // Qual página? (Padrão: 1)
+        const offset = (page - 1) * limit;                 // Cálculo matemático para pular registros
         
-        // Executar e pegar todos os resultados
-        const filmes = stmt.all();
+        const genero = req.query.genero;                   // Ex: /filmes?genero=Ação
+        const sort = req.query.sort || 'id';               // Qual coluna ordenar? (Padrão: id)
+        const order = req.query.order === 'desc' ? 'DESC' : 'ASC'; // Crescente ou decrescente?
+
+        // 🔒 Validação de segurança (Evita que digitem comandos maliciosos na ordenação)
+        const colunasValidas = ['id', 'titulo', 'ano', 'genero'];
+        const colunaOrdenacao = colunasValidas.includes(sort) ? sort : 'id';
+
+        // 2. Construindo a query SQL base (Usando LEFT JOIN para trazer o nome do estúdio)
+        let sql = `
+            SELECT filmes.*, estudios.nome AS estudio_nome 
+            FROM filmes 
+            LEFT JOIN estudios ON filmes.estudio_id = estudios.id
+        `;
+        const params = []; // Array que vai guardar os valores seguros dos filtros
+
+        // 3. Aplicando Filtros dinamicamente (WHERE)
+        if (genero) {
+            sql += ` WHERE filmes.genero = ?`; // Adiciona o filtro na string do SQL
+            params.push(genero);               // Guarda o valor para substituir o '?'
+        }
+
+        // 4. Aplicando Ordenação e Paginação (ORDER BY, LIMIT, OFFSET)
+        sql += ` ORDER BY filmes.${colunaOrdenacao} ${order}`;
+        sql += ` LIMIT ? OFFSET ?`;
+        params.push(limit, offset); // Limite de itens e quantos itens pular
+
+        // 5. Preparar e Executar
+        const stmt = db.prepare(sql);
+        const filmes = stmt.all(...params); // Os ... (spread) abrem o array e passam os valores ordenados
         
-        // Retornar array (pode ser vazio [])
-        res.json(filmes);
+        // 6. Resposta estruturada para ajudar quem consumir a API
+        res.json({
+            paginaAtual: page,
+            itensPorPagina: limit,
+            quantidadeRetornada: filmes.length,
+            dados: filmes
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ erro: 'Erro ao buscar filmes' });
@@ -49,7 +117,7 @@ app.get('/first-API/filmes', (req, res) => {
 });
 
 // POST /filmes -> Cria novo filme
-app.post('/filmes', (req, res) => {
+app.post('/filmes', verifyJWT, (req, res) => {
     try {
         const { titulo, diretor, ano, genero } = req.body;
 
@@ -95,7 +163,7 @@ app.post('/filmes', (req, res) => {
 });
 
 // PUT /filmes/:id -> Atualiza um filme existente
-app.put('/filmes/:id', (req, res) => {
+app.put('/filmes/:id', verifyJWT, (req, res) => {
     try {
         const id = parseInt(req.params.id, 10);
         const { titulo, diretor, ano, genero } = req.body;
@@ -124,7 +192,7 @@ app.put('/filmes/:id', (req, res) => {
 });
 
 // DELETE /filmes/:id -> Deleta um filme existente
-app.delete('/filmes/:id', (req, res) => {
+app.delete('/filmes/:id', verifyJWT, (req, res) => {
     try{
         const id = parseInt(req.params.id, 10);
 
