@@ -2,6 +2,8 @@
 
 Esta é uma API RESTful robusta desenvolvida em Node.js com Express para o gerenciamento de um catálogo de filmes. Diferente da versão Mock, esta API utiliza um banco de dados relacional real (**SQLite**), implementa sistema de segurança com **JWT** e traz recursos avançados como paginação e relacionamentos.
 
+👉 **Quer entender o fluxo interno da API passo a passo? [Leia o guia COMO FUNCIONA](./COMO_FUNCIONA.md)**
+
 ---
 
 ## ✅ Funcionalidades Implementadas
@@ -13,6 +15,13 @@ Esta é uma API RESTful robusta desenvolvida em Node.js com Express para o geren
 - **[x] Validações robustas:** Proteção contra SQL Injection (`Prepared Statements`) e checagem de regras de negócio/tipagem.
 - **[x] Status codes corretos:** Retornos claros (`200`, `201`, `400`, `401`, `403`, `404`, `500`).
 
+---
+
+## 🧪 Rodando os Testes Automatizados
+A API possui uma suíte de testes de integração configurada com **Jest** e **Supertest**. Para validar se todas as rotas e bloqueios de segurança estão funcionando, basta rodar:
+```bash
+npm test
+```
 ---
 
 ## 🚀 Como executar o projeto
@@ -28,6 +37,13 @@ Esta é uma API RESTful robusta desenvolvida em Node.js com Express para o geren
    ```
 4. **Magia acontecendo:** Ao rodar o servidor pela primeira vez, o arquivo `filmes.db` será criado e o banco será automaticamente populado com os dados iniciais!
 5. A API estará rodando em: `http://localhost:3000`
+
+### Utilizando com o Postman
+Para facilitar o uso, você pode importar as requisições prontas no seu Postman:
+1. Abra o Postman e clique em **Import**.
+2. Selecione o arquivo da *Collection* (formato `.json`) salvo nesta pasta.
+3. Lembre-se de primeiro executar a requisição de **Login (POST)** para obter o Token JWT.
+4. Cole o token na aba *Authorization -> Bearer Token* das requisições de POST, PUT e DELETE.
 
 ---
 
