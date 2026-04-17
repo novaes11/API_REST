@@ -6,6 +6,15 @@ Esta é uma API RESTful robusta desenvolvida em Node.js com Express para o geren
 
 ---
 
+## 🌐 API Online (Deploy na Nuvem)
+Não quer rodar o projeto localmente? A API está hospedada e rodando 24/7 na nuvem! Você pode testar todos os endpoints diretamente pelo link abaixo:
+
+**URL Base:** `https://api-rest-yhjx.onrender.com/first-API/api-db`
+
+Basta utilizar este link no lugar do `http://localhost:3000` na hora de fazer as suas requisições no Postman ou no navegador.
+
+---
+
 ## ✅ Funcionalidades Implementadas
 - **[x] CRUD 100% com SQLite:** Banco de dados integrado utilizando `better-sqlite3`.
 - **[x] Mínimo 20 registros:** Script de Seed automático que popula o banco com 5 estúdios e 20 filmes na primeira execução.
