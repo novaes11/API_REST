@@ -119,7 +119,7 @@ app.get('/first-API/filmes', (req, res) => {
 // POST /filmes -> Cria novo filme
 app.post('/filmes', verifyJWT, (req, res) => {
     try {
-        const { titulo, diretor, ano, genero } = req.body;
+        const { titulo, diretor, ano, genero, estudio_id } = req.body;
 
         // Validação de campos obrigatórios
         if (!titulo || !diretor || !ano || !genero) {
@@ -138,6 +138,10 @@ app.post('/filmes', verifyJWT, (req, res) => {
         if (typeof ano !== 'number') {
             return res.status(400).json({ erro: "Type mismatch: ano deve ser number." });
         }
+        
+        if (estudio_id !== undefined && typeof estudio_id !== 'number') {
+            return res.status(400).json({ erro: "Type mismatch: estudio_id deve ser number." });
+        }
 
         // Business logic
         const currentYear = new Date().getFullYear();
@@ -148,13 +152,13 @@ app.post('/filmes', verifyJWT, (req, res) => {
         // 🔒 PROTEÇÃO SQL INJECTION AQUI: 
         // Usamos `?` no lugar dos valores. O better-sqlite3 sanitiza os dados automaticamente.
         const stmt = db.prepare(
-            'INSERT INTO filmes (titulo, diretor, ano, genero) VALUES (?, ?, ?, ?)'
+            'INSERT INTO filmes (titulo, diretor, ano, genero, estudio_id) VALUES (?, ?, ?, ?, ?)'
         );
-        const info = stmt.run(titulo, diretor, ano, genero); // Passamos as variáveis aqui
+        const info = stmt.run(titulo, diretor, ano, genero, estudio_id || null); // Passamos as variáveis aqui
 
         res.status(201).json({
             mensagem: "Resource created successfully",
-            data: { id: info.lastInsertRowid, titulo, diretor, ano, genero }
+            data: { id: info.lastInsertRowid, titulo, diretor, ano, genero, estudio_id: estudio_id || null }
         });
     } catch(error) {
         console.error(error);
@@ -166,15 +170,19 @@ app.post('/filmes', verifyJWT, (req, res) => {
 app.put('/filmes/:id', verifyJWT, (req, res) => {
     try {
         const id = parseInt(req.params.id, 10);
-        const { titulo, diretor, ano, genero } = req.body;
+        const { titulo, diretor, ano, genero, estudio_id } = req.body;
 
         if (!titulo || !diretor || !ano || !genero) {
             return res.status(400).json({ erro: "Missing required fields." });
         }
+        
+        if (estudio_id !== undefined && typeof estudio_id !== 'number') {
+            return res.status(400).json({ erro: "Type mismatch: estudio_id deve ser number." });
+        }
 
         // 🔒 PROTEÇÃO SQL INJECTION AQUI TAMBÉM:
-        const stmt = db.prepare('UPDATE filmes SET titulo = ?, diretor = ?, ano = ?, genero = ? WHERE id = ?');
-        const info = stmt.run(titulo, diretor, ano, genero, id); 
+        const stmt = db.prepare('UPDATE filmes SET titulo = ?, diretor = ?, ano = ?, genero = ?, estudio_id = ? WHERE id = ?');
+        const info = stmt.run(titulo, diretor, ano, genero, estudio_id || null, id); 
 
         // Se info.changes for 0, significa que nenhum ID correspondente foi encontrado
         if (info.changes === 0) {
@@ -183,7 +191,7 @@ app.put('/filmes/:id', verifyJWT, (req, res) => {
 
         res.status(200).json({
             mensagem: "Resource updated successfully",
-            data: { id, titulo, diretor, ano, genero }
+            data: { id, titulo, diretor, ano, genero, estudio_id: estudio_id || null }
         });
     } catch(error) {
         console.error(error);
@@ -214,7 +222,12 @@ app.delete('/filmes/:id', verifyJWT, (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`[API] Server is running on port ${PORT}`);
-});
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`[API] Server is running on port ${PORT}`);
+    });
+}
+
+// Exportando a aplicação para o Supertest utilizar
+module.exports = app;
